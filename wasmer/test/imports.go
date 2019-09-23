@@ -14,8 +14,8 @@ package wasmertest
 // extern void logMessageWithContextData(void *context, int32_t pointer, int32_t length);
 import "C"
 import (
+	wasm "github.com/ElrondNetwork/go-ext-wasm/wasmer"
 	"github.com/stretchr/testify/assert"
-	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"path"
 	"runtime"
 	"testing"

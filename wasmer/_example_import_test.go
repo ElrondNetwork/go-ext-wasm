@@ -9,7 +9,7 @@ import "C"
 
 import (
 	"fmt"
-	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
+	wasm "github.com/ElrondNetwork/go-ext-wasm/wasmer"
 	"path"
 	"runtime"
 	"unsafe"

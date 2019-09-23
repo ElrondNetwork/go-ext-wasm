@@ -1,8 +1,8 @@
 package wasmertest
 
 import (
+	wasm "github.com/ElrondNetwork/go-ext-wasm/wasmer"
 	"github.com/stretchr/testify/assert"
-	wasm "github.com/wasmerio/go-ext-wasm/wasmer"
 	"path"
 	"runtime"
 	"testing"
