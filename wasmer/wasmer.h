@@ -188,7 +188,7 @@ wasmer_result_t wasmer_compile(wasmer_module_t **module,
  * Returns `wasmer_result_t::WASMER_ERROR` upon failure. Use `wasmer_last_error_length`
  * and `wasmer_last_error_message` to get an error message.
  */
-wasmer_result_t wasmer_compile_with_limit(wasmer_module_t **module,
+wasmer_result_t wasmer_compile_with_gas_metering(wasmer_module_t **module,
                                           uint8_t *wasm_bytes,
                                           uint32_t wasm_bytes_len,
                                           uint64_t gas_limit);
