@@ -1,4 +1,4 @@
-module github.com/wasmerio/go-ext-wasm/benchmarks-life
+module github.com/ElrondNetwork/go-ext-wasm/benchmarks-life
 
 go 1.12
 

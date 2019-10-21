@@ -1,4 +1,4 @@
-module github.com/wasmerio/go-ext-wasm/benchmarks-wagon
+module github.com/ElrondNetwork/go-ext-wasm/benchmarks-wagon
 
 go 1.12
 
