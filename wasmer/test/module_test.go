@@ -6,8 +6,6 @@ import (
 	"path"
 	"runtime"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestValidate(t *testing.T) {
@@ -61,7 +59,7 @@ func TestModuleInstantiate(t *testing.T) {
 }
 
 func TestModuleInstantiateWithLimit(t *testing.T) {
-	module, err := wasm.CompileWithLimit(GetBytes(), 20000)
+	module, err := wasm.CompileWithGasMetering(GetBytes(), 20000)
 	defer module.Close()
 
 	assert.NoError(t, err)
@@ -78,7 +76,7 @@ func TestModuleInstantiateWithLimit(t *testing.T) {
 
 // TODO: this only passes if the metering feature flag is enabled in the rust binary
 func TestModuleRunWithLimit(t *testing.T) {
-	module, err := wasm.CompileWithLimit(GetBytes(), 20000)
+	module, err := wasm.CompileWithGasMetering(GetBytes(), 20000)
 	defer module.Close()
 	assert.NoError(t, err)
 
@@ -105,7 +103,7 @@ func TestModuleRunWithLimit(t *testing.T) {
 
 // TODO: this only passes if the metering feature flag is enabled in the rust binary
 func TestModuleRunExceedsLimit(t *testing.T) {
-	module, err := wasm.CompileWithLimit(GetBytes(), 5)
+	module, err := wasm.CompileWithGasMetering(GetBytes(), 5)
 	defer module.Close()
 	assert.NoError(t, err)
 
