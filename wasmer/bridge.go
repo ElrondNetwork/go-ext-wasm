@@ -326,6 +326,24 @@ func cWasmerInstantiate(
 	))
 }
 
+func cWasmerInstantiateWithMetering(
+	instance **cWasmerInstanceT,
+	wasmBytes *cUchar,
+	wasmBytesLength cUint,
+	imports *cWasmerImportT,
+	importsLength cInt,
+	gasLimit uint64,
+) cWasmerResultT {
+	return (cWasmerResultT)(C.wasmer_instantiate_with_metering(
+		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
+		(*C.uchar)(wasmBytes),
+		(C.uint)(wasmBytesLength),
+		(*C.wasmer_import_t)(imports),
+		(C.int)(importsLength),
+		(C.uint64_t)(gasLimit),
+	))
+}
+
 func cWasmerLastErrorLength() cInt {
 	return (cInt)(C.wasmer_last_error_length())
 }

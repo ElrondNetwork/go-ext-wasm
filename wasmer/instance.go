@@ -111,6 +111,40 @@ func NewInstanceWithImports(bytes []byte, imports *Imports) (Instance, error) {
 	)
 }
 
+// NewInstanceWithImports constructs a new `Instance` with imported functions.
+func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64) (Instance, error) {
+	return newInstanceWithImports(
+		imports,
+		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
+			var instance *cWasmerInstanceT
+
+			var compileResult = cWasmerInstantiateWithMetering(
+				&instance,
+				(*cUchar)(unsafe.Pointer(&bytes[0])),
+				cUint(len(bytes)),
+				wasmImportsCPointer,
+				cInt(numberOfImports),
+				gasLimit,
+			)
+
+			if compileResult != cWasmerOk {
+				var lastError, err = GetLastError()
+				var errorMessage = "Failed to instantiate the module:\n    %s"
+
+				if err != nil {
+					errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+				} else {
+					errorMessage = fmt.Sprintf(errorMessage, lastError)
+				}
+
+				return nil, NewInstanceError(errorMessage)
+			}
+
+			return instance, nil
+		},
+	)
+}
+
 func newInstanceWithImports(
 	imports *Imports,
 	instanceBuilder func(*cWasmerImportT, int) (*cWasmerInstanceT, error),
