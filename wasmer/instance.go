@@ -112,7 +112,7 @@ func NewInstanceWithImports(bytes []byte, imports *Imports) (Instance, error) {
 }
 
 // NewInstanceWithImports constructs a new `Instance` with imported functions.
-func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64) (Instance, error) {
+func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64, costs_table_name string) (Instance, error) {
 	return newInstanceWithImports(
 		imports,
 		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
@@ -125,6 +125,7 @@ func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint
 				wasmImportsCPointer,
 				cInt(numberOfImports),
 				gasLimit,
+				costs_table_name,
 			)
 
 			if compileResult != cWasmerOk {

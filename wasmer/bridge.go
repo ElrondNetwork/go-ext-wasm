@@ -333,6 +333,7 @@ func cWasmerInstantiateWithMetering(
 	imports *cWasmerImportT,
 	importsLength cInt,
 	gasLimit uint64,
+	costs_table_name string,
 ) cWasmerResultT {
 	return (cWasmerResultT)(C.wasmer_instantiate_with_metering(
 		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
@@ -341,6 +342,7 @@ func cWasmerInstantiateWithMetering(
 		(*C.wasmer_import_t)(imports),
 		(C.int)(importsLength),
 		(C.uint64_t)(gasLimit),
+		(*C.char)(C.CString(costs_table_name)),
 	))
 }
 
