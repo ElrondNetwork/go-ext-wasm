@@ -5,6 +5,8 @@ import (
 	"unsafe"
 )
 
+const OPCODE_COUNT = 410
+
 // InstanceError represents any kind of errors related to a WebAssembly instance. It
 // is returned by `Instance` functions only.
 type InstanceError struct {
@@ -112,7 +114,7 @@ func NewInstanceWithImports(bytes []byte, imports *Imports) (Instance, error) {
 }
 
 // NewInstanceWithImports constructs a new `Instance` with imported functions.
-func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64, costs_table_name string) (Instance, error) {
+func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64, opcode_costs *[OPCODE_COUNT]uint32) (Instance, error) {
 	return newInstanceWithImports(
 		imports,
 		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
@@ -125,7 +127,7 @@ func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint
 				wasmImportsCPointer,
 				cInt(numberOfImports),
 				gasLimit,
-				costs_table_name,
+				opcode_costs,
 			)
 
 			if compileResult != cWasmerOk {

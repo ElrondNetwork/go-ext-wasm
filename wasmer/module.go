@@ -107,7 +107,7 @@ func Compile(bytes []byte) (Module, error) {
 }
 
 // Compile compiles a WebAssembly module from bytes, with a fixed gas limit
-func CompileWithGasMetering(bytes []byte, gasLimit uint64) (Module, error) {
+func CompileWithGasMetering(bytes []byte, gasLimit uint64, opcode_costs *[OPCODE_COUNT]uint32) (Module, error) {
 	var module *cWasmerModuleT
 
 	var compileResult = cWasmerCompileWithGasMetering(
@@ -115,6 +115,7 @@ func CompileWithGasMetering(bytes []byte, gasLimit uint64) (Module, error) {
 		(*cUchar)(unsafe.Pointer(&bytes[0])),
 		cUint(len(bytes)),
 		gasLimit,
+		opcode_costs,
 	)
 
 	var emptyModule = Module{module: nil}

@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define OPCODE_COUNT 410
+
 /**
  * List of export/import kinds.
  */
@@ -184,14 +186,17 @@ wasmer_result_t wasmer_compile(wasmer_module_t **module,
 
 /**
  * Creates a new Module with gas limit from the given wasm bytes.
+ *
  * Returns `wasmer_result_t::WASMER_OK` upon success.
+ *
  * Returns `wasmer_result_t::WASMER_ERROR` upon failure. Use `wasmer_last_error_length`
  * and `wasmer_last_error_message` to get an error message.
  */
 wasmer_result_t wasmer_compile_with_gas_metering(wasmer_module_t **module,
-                                          uint8_t *wasm_bytes,
-                                          uint32_t wasm_bytes_len,
-                                          uint64_t gas_limit);
+                                                 uint8_t *wasm_bytes,
+                                                 uint32_t wasm_bytes_len,
+                                                 uint64_t gas_limit,
+                                                 const uint32_t *opcode_costs_pointer);
 
 /**
  * Gets export descriptor kind
@@ -541,12 +546,12 @@ wasmer_result_t wasmer_instantiate(wasmer_instance_t **instance,
                                    int imports_len);
 
 wasmer_result_t wasmer_instantiate_with_metering(wasmer_instance_t **instance,
-                                   uint8_t *wasm_bytes,
-                                   uint32_t wasm_bytes_len,
-                                   wasmer_import_t *imports,
-                                   int imports_len,
-																	 uint64_t gas_limit,
-																	 char *costs_table_name);
+                                                 uint8_t *wasm_bytes,
+                                                 uint32_t wasm_bytes_len,
+                                                 wasmer_import_t *imports,
+                                                 int imports_len,
+                                                 uint64_t gas_limit,
+                                                 const uint32_t *opcode_costs_pointer);
 
 /**
  * Gets the length in bytes of the last error.
@@ -641,8 +646,9 @@ void wasmer_module_destroy(wasmer_module_t *module);
 
 /**
  * Given:
- *  A prepared `wasmer` import-object
- *  A compiled wasmer module
+ * * A prepared `wasmer` import-object
+ * * A compiled wasmer module
+ *
  * Instantiates a wasmer instance
  */
 wasmer_result_t wasmer_module_import_instantiate(wasmer_instance_t **instance,

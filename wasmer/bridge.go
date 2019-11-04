@@ -65,12 +65,19 @@ func cWasmerCompile(module **cWasmerModuleT, wasmBytes *cUchar, wasmBytesLength 
 }
 
 // TODO: is this an auto-gen file? how should I create this?
-func cWasmerCompileWithGasMetering(module **cWasmerModuleT, wasmBytes *cUchar, wasmBytesLength cUint, gasLimit uint64) cWasmerResultT {
+func cWasmerCompileWithGasMetering(
+	module **cWasmerModuleT,
+	wasmBytes *cUchar,
+	wasmBytesLength cUint,
+	gasLimit uint64,
+	opcode_costs *[OPCODE_COUNT]uint32,
+) cWasmerResultT {
 	return (cWasmerResultT)(C.wasmer_compile_with_gas_metering(
 		(**C.wasmer_module_t)(unsafe.Pointer(module)),
 		(*C.uchar)(wasmBytes),
 		(C.uint)(wasmBytesLength),
 		(C.uint64_t)(gasLimit),
+		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
 	))
 }
 
@@ -333,7 +340,7 @@ func cWasmerInstantiateWithMetering(
 	imports *cWasmerImportT,
 	importsLength cInt,
 	gasLimit uint64,
-	costs_table_name string,
+	opcode_costs *[OPCODE_COUNT]uint32,
 ) cWasmerResultT {
 	return (cWasmerResultT)(C.wasmer_instantiate_with_metering(
 		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
@@ -342,7 +349,7 @@ func cWasmerInstantiateWithMetering(
 		(*C.wasmer_import_t)(imports),
 		(C.int)(importsLength),
 		(C.uint64_t)(gasLimit),
-		(*C.char)(C.CString(costs_table_name)),
+		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
 	))
 }
 
