@@ -55,7 +55,7 @@ type Import struct {
 // Imports represents a set of imported functions for a WebAssembly instance.
 type Imports struct {
 	// All imports.
-	imports map[string]Import
+	imports map[string]map[string]Import
 
 	// Current namespace where to register the import.
 	currentNamespace string
@@ -63,7 +63,7 @@ type Imports struct {
 
 // NewImports constructs a new empty `Imports`.
 func NewImports() *Imports {
-	var imports = make(map[string]Import)
+	var imports = make(map[string]map[string]Import)
 	var currentNamespace = "env"
 
 	return &Imports{imports, currentNamespace}
@@ -74,6 +74,14 @@ func (imports *Imports) Namespace(namespace string) *Imports {
 	imports.currentNamespace = namespace
 
 	return imports
+}
+
+func (imports *Imports) Count() int {
+	count := 0
+	for _, namespacedImports := range imports.imports {
+		count += len(namespacedImports)
+	}
+	return count
 }
 
 // Append adds a new imported function to the current set.
@@ -136,7 +144,11 @@ func (imports *Imports) Append(importName string, implementation interface{}, cg
 	var importedFunctionPointer *cWasmerImportFuncT
 	var namespace = imports.currentNamespace
 
-	imports.imports[importName] = Import{
+	if imports.imports[namespace] == nil {
+		imports.imports[namespace] = make(map[string]Import)
+	}
+
+	imports.imports[namespace][importName] = Import{
 		implementation,
 		cgoPointer,
 		importedFunctionPointer,
@@ -150,9 +162,11 @@ func (imports *Imports) Append(importName string, implementation interface{}, cg
 
 // Close closes/frees all imported functions that have been registered by Wasmer.
 func (imports *Imports) Close() {
-	for _, importFunction := range imports.imports {
-		if nil != importFunction.importedFunctionPointer {
-			cWasmerImportFuncDestroy(importFunction.importedFunctionPointer)
+	for _, namespacedImports := range imports.imports {
+		for _, importFunction := range namespacedImports {
+			if nil != importFunction.importedFunctionPointer {
+				cWasmerImportFuncDestroy(importFunction.importedFunctionPointer)
+			}
 		}
 	}
 }
