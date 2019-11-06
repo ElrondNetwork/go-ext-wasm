@@ -150,43 +150,9 @@ func newInstanceWithImports(
 	imports *Imports,
 	instanceBuilder func(*cWasmerImportT, int) (*cWasmerInstanceT, error),
 ) (Instance, error) {
-	var numberOfImports = len(imports.imports)
-	var wasmImports = make([]cWasmerImportT, numberOfImports)
-	var importFunctionNth = 0
 
-	for importName, importFunction := range imports.imports {
-		var wasmInputsArity = len(importFunction.wasmInputs)
-		var wasmOutputsArity = len(importFunction.wasmOutputs)
-
-		var importFunctionInputsCPointer *cWasmerValueTag
-		var importFunctionOutputsCPointer *cWasmerValueTag
-
-		if wasmInputsArity > 0 {
-			importFunctionInputsCPointer = (*cWasmerValueTag)(unsafe.Pointer(&importFunction.wasmInputs[0]))
-		}
-
-		if wasmOutputsArity > 0 {
-			importFunctionOutputsCPointer = (*cWasmerValueTag)(unsafe.Pointer(&importFunction.wasmOutputs[0]))
-		}
-
-		importFunction.importedFunctionPointer = cWasmerImportFuncNew(
-			importFunction.cgoPointer,
-			importFunctionInputsCPointer,
-			cUint(wasmInputsArity),
-			importFunctionOutputsCPointer,
-			cUint(wasmOutputsArity),
-		)
-
-		var importedFunction = cNewWasmerImportT(
-			importFunction.namespace,
-			importName,
-			importFunction.importedFunctionPointer,
-		)
-
-		wasmImports[importFunctionNth] = importedFunction
-		importFunctionNth++
-	}
-
+	wasmImports := generateWasmerImports(imports)
+	numberOfImports := len(wasmImports)
 	var wasmImportsCPointer *cWasmerImportT
 
 	if numberOfImports > 0 {
@@ -447,6 +413,49 @@ func newInstanceWithImports(
 	}
 
 	return Instance{instance: instance, imports: imports, Exports: exports, Memory: &memory}, nil
+}
+
+func generateWasmerImports(imports *Imports) []cWasmerImportT {
+	var numberOfImports = imports.Count()
+	var wasmImports = make([]cWasmerImportT, numberOfImports)
+	var importFunctionNth = 0
+
+	for _, namespacedImports := range imports.imports {
+		for importName, importFunction := range namespacedImports {
+			var wasmInputsArity = len(importFunction.wasmInputs)
+			var wasmOutputsArity = len(importFunction.wasmOutputs)
+
+			var importFunctionInputsCPointer *cWasmerValueTag
+			var importFunctionOutputsCPointer *cWasmerValueTag
+
+			if wasmInputsArity > 0 {
+				importFunctionInputsCPointer = (*cWasmerValueTag)(unsafe.Pointer(&importFunction.wasmInputs[0]))
+			}
+
+			if wasmOutputsArity > 0 {
+				importFunctionOutputsCPointer = (*cWasmerValueTag)(unsafe.Pointer(&importFunction.wasmOutputs[0]))
+			}
+
+			importFunction.importedFunctionPointer = cWasmerImportFuncNew(
+				importFunction.cgoPointer,
+				importFunctionInputsCPointer,
+				cUint(wasmInputsArity),
+				importFunctionOutputsCPointer,
+				cUint(wasmOutputsArity),
+			)
+
+			var importedFunction = cNewWasmerImportT(
+				importFunction.namespace,
+				importName,
+				importFunction.importedFunctionPointer,
+			)
+
+			wasmImports[importFunctionNth] = importedFunction
+			importFunctionNth++
+		}
+	}
+
+	return wasmImports
 }
 
 // HasMemory checks whether the instance has at least one exported memory.
