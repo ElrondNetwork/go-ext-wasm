@@ -186,34 +186,33 @@ func (module *Module) Instantiate() (Instance, error) {
 
 // InstantiateWithImports creates a new instance with imports of the WebAssembly module.
 func (module *Module) InstantiateWithImports(imports *Imports) (Instance, error) {
-	return newInstanceWithImports(
-		imports,
-		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
-			var instance *cWasmerInstanceT
+	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
 
-			var instantiateResult = cWasmerModuleInstantiate(
-				module.module,
-				&instance,
-				wasmImportsCPointer,
-				cInt(numberOfImports),
-			)
+	var c_instance *cWasmerInstanceT
 
-			if instantiateResult != cWasmerOk {
-				var lastError, err = GetLastError()
-				var errorMessage = "Failed to instantiate the module:\n    %s"
-
-				if err != nil {
-					errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
-				} else {
-					errorMessage = fmt.Sprintf(errorMessage, lastError)
-				}
-
-				return nil, NewModuleError(errorMessage)
-			}
-
-			return instance, nil
-		},
+	var instantiateResult = cWasmerModuleInstantiate(
+		module.module,
+		&c_instance,
+		wasmImportsCPointer,
+		cInt(numberOfImports),
 	)
+
+	if instantiateResult != cWasmerOk {
+		var lastError, err = GetLastError()
+		var errorMessage = "Failed to instantiate the module:\n    %s"
+
+		if err != nil {
+			errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+		} else {
+			errorMessage = fmt.Sprintf(errorMessage, lastError)
+		}
+
+		var emptyInstance = Instance{instance: nil, imports: nil, Exports: nil, Memory: nil}
+		return emptyInstance, NewModuleError(errorMessage)
+	}
+
+	instance, err := newInstanceWithImports(c_instance, imports)
+	return instance, err
 }
 
 // Serialize serializes the current module into a sequence of

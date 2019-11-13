@@ -82,87 +82,76 @@ func NewInstance(bytes []byte) (Instance, error) {
 
 // NewInstanceWithImports constructs a new `Instance` with imported functions.
 func NewInstanceWithImports(bytes []byte, imports *Imports) (Instance, error) {
-	return newInstanceWithImports(
-		imports,
-		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
-			var instance *cWasmerInstanceT
+	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
 
-			var compileResult = cWasmerInstantiate(
-				&instance,
-				(*cUchar)(unsafe.Pointer(&bytes[0])),
-				cUint(len(bytes)),
-				wasmImportsCPointer,
-				cInt(numberOfImports),
-			)
+	var c_instance *cWasmerInstanceT
 
-			if compileResult != cWasmerOk {
-				var lastError, err = GetLastError()
-				var errorMessage = "Failed to instantiate the module:\n    %s"
-
-				if err != nil {
-					errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
-				} else {
-					errorMessage = fmt.Sprintf(errorMessage, lastError)
-				}
-
-				return nil, NewInstanceError(errorMessage)
-			}
-
-			return instance, nil
-		},
+	var compileResult = cWasmerInstantiate(
+		&c_instance,
+		(*cUchar)(unsafe.Pointer(&bytes[0])),
+		cUint(len(bytes)),
+		wasmImportsCPointer,
+		cInt(numberOfImports),
 	)
+
+	if compileResult != cWasmerOk {
+		var lastError, err = GetLastError()
+		var errorMessage = "Failed to instantiate the module:\n    %s"
+
+		if err != nil {
+			errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+		} else {
+			errorMessage = fmt.Sprintf(errorMessage, lastError)
+		}
+
+		var emptyInstance = Instance{instance: nil, imports: nil, Exports: nil, Memory: nil}
+		return emptyInstance, NewInstanceError(errorMessage)
+	}
+
+	instance, err := newInstanceWithImports(c_instance, imports)
+	return instance, err
 }
 
-// NewInstanceWithImports constructs a new `Instance` with imported functions.
 func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64, opcode_costs *[OPCODE_COUNT]uint32) (Instance, error) {
-	return newInstanceWithImports(
-		imports,
-		func(wasmImportsCPointer *cWasmerImportT, numberOfImports int) (*cWasmerInstanceT, error) {
-			var instance *cWasmerInstanceT
+	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
 
-			var compileResult = cWasmerInstantiateWithMetering(
-				&instance,
-				(*cUchar)(unsafe.Pointer(&bytes[0])),
-				cUint(len(bytes)),
-				wasmImportsCPointer,
-				cInt(numberOfImports),
-				gasLimit,
-				opcode_costs,
-			)
+	var c_instance *cWasmerInstanceT
 
-			if compileResult != cWasmerOk {
-				var lastError, err = GetLastError()
-				var errorMessage = "Failed to instantiate the module:\n    %s"
-
-				if err != nil {
-					errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
-				} else {
-					errorMessage = fmt.Sprintf(errorMessage, lastError)
-				}
-
-				return nil, NewInstanceError(errorMessage)
-			}
-
-			return instance, nil
-		},
+	var compileResult = cWasmerInstantiateWithMetering(
+		&c_instance,
+		(*cUchar)(unsafe.Pointer(&bytes[0])),
+		cUint(len(bytes)),
+		wasmImportsCPointer,
+		cInt(numberOfImports),
+		gasLimit,
+		opcode_costs,
 	)
+
+	if compileResult != cWasmerOk {
+		var lastError, err = GetLastError()
+		var errorMessage = "Failed to instantiate the module:\n    %s"
+
+		if err != nil {
+			errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+		} else {
+			errorMessage = fmt.Sprintf(errorMessage, lastError)
+		}
+
+		var emptyInstance = Instance{instance: nil, imports: nil, Exports: nil, Memory: nil}
+		return emptyInstance, NewInstanceError(errorMessage)
+	}
+
+	instance, err := newInstanceWithImports(c_instance, imports)
+	return instance, err
 }
 
 func newInstanceWithImports(
+	instance *cWasmerInstanceT,
 	imports *Imports,
-	instanceBuilder func(*cWasmerImportT, int) (*cWasmerInstanceT, error),
 ) (Instance, error) {
 
-	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
-
-	instance, err := instanceBuilder(wasmImportsCPointer, numberOfImports)
-
-	var memory Memory
 	var emptyInstance = Instance{instance: nil, imports: nil, Exports: nil, Memory: nil}
-
-	if err != nil {
-		return emptyInstance, err
-	}
+	var memory Memory
 
 	var exports = make(map[string]func(...interface{}) (Value, error))
 
