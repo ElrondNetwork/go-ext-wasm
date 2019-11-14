@@ -276,6 +276,12 @@ func (instance *Instance) Close() {
 	}
 }
 
+func (instance *Instance) Clean() {
+	if instance.instance != nil {
+		cWasmerInstanceDestroy(instance.instance)
+	}
+}
+
 func (instance *Instance) GetPointsUsed() uint64 {
 	return cWasmerInstanceGetPointsUsed(instance.instance)
 }
