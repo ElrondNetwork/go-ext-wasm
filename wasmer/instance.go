@@ -1,6 +1,7 @@
 package wasmer
 
 import (
+	"errors"
 	"fmt"
 	"unsafe"
 )
@@ -75,6 +76,40 @@ type Instance struct {
 	Memory *Memory
 }
 
+type ImportObject struct {
+	imports         *Imports
+	c_import_object *cWasmerImportObjectT
+}
+
+func NewImportObject(imports *Imports) (ImportObject, error) {
+	var c_import_object *cWasmerImportObjectT
+
+	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
+
+	var result = cWasmerNewImportObjectFromImports(
+		&c_import_object,
+		wasmImportsCPointer,
+		cInt(numberOfImports),
+	)
+
+	if result != cWasmerOk {
+		var lastError, err = GetLastError()
+		var errorMessage = "Failed to create cached imports: %s"
+
+		if err != nil {
+			errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+		} else {
+			errorMessage = fmt.Sprintf(errorMessage, lastError)
+		}
+
+		var emptyImportsCache = ImportObject{imports: nil, c_import_object: nil}
+		return emptyImportsCache, errors.New(errorMessage)
+	}
+
+	importObject := ImportObject{imports: imports, c_import_object: c_import_object}
+	return importObject, nil
+}
+
 // NewInstance constructs a new `Instance` with no imported functions.
 func NewInstance(bytes []byte) (Instance, error) {
 	return NewInstanceWithImports(bytes, NewImports())
@@ -112,7 +147,12 @@ func NewInstanceWithImports(bytes []byte, imports *Imports) (Instance, error) {
 	return instance, err
 }
 
-func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint64, opcode_costs *[OPCODE_COUNT]uint32) (Instance, error) {
+func NewMeteredInstanceWithImports(
+	bytes []byte,
+	imports *Imports,
+	gasLimit uint64,
+	opcode_costs *[OPCODE_COUNT]uint32,
+) (Instance, error) {
 	wasmImportsCPointer, numberOfImports := generateWasmerImports(imports)
 
 	var c_instance *cWasmerInstanceT
@@ -142,6 +182,41 @@ func NewMeteredInstanceWithImports(bytes []byte, imports *Imports, gasLimit uint
 	}
 
 	instance, err := newInstanceWithImports(c_instance, imports)
+	return instance, err
+}
+
+func NewMeteredInstanceWithImportObject(
+	bytes []byte,
+	importObject *ImportObject,
+	gasLimit uint64,
+	opcode_costs *[OPCODE_COUNT]uint32,
+) (Instance, error) {
+	var c_instance *cWasmerInstanceT
+
+	var compileResult = cWasmerInstantiateWithMeteringAndImportObject(
+		&c_instance,
+		(*cUchar)(unsafe.Pointer(&bytes[0])),
+		cUint(len(bytes)),
+		importObject.c_import_object,
+		gasLimit,
+		opcode_costs,
+	)
+
+	if compileResult != cWasmerOk {
+		var lastError, err = GetLastError()
+		var errorMessage = "Failed to instantiate the module:\n    %s"
+
+		if err != nil {
+			errorMessage = fmt.Sprintf(errorMessage, "(unknown details)")
+		} else {
+			errorMessage = fmt.Sprintf(errorMessage, lastError)
+		}
+
+		var emptyInstance = Instance{instance: nil, imports: nil, Exports: nil, Memory: nil}
+		return emptyInstance, NewInstanceError(errorMessage)
+	}
+
+	instance, err := newInstanceWithImports(c_instance, importObject.imports)
 	return instance, err
 }
 

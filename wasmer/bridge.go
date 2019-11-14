@@ -25,6 +25,7 @@ type cWasmerImportExportKind C.wasmer_import_export_kind
 type cWasmerImportExportValue C.wasmer_import_export_value
 type cWasmerImportFuncT C.wasmer_import_func_t
 type cWasmerImportT C.wasmer_import_t
+type cWasmerImportObjectT C.wasmer_import_object_t
 type cWasmerInstanceContextT C.wasmer_instance_context_t
 type cWasmerInstanceT C.wasmer_instance_t
 type cWasmerMemoryT C.wasmer_memory_t
@@ -92,6 +93,18 @@ func cWasmerInstanceSetPointsUsed(instance *cWasmerInstanceT, points uint64) {
 		(*C.wasmer_instance_t)(instance),
 		(C.uint64_t)(points),
 	)
+}
+
+func cWasmerNewImportObjectFromImports(
+	import_object **cWasmerImportObjectT,
+	imports *cWasmerImportT,
+	importsLength cInt,
+) cWasmerResultT {
+	return (cWasmerResultT)(C.wasmer_import_object_new_from_imports(
+		(**C.wasmer_import_object_t)(unsafe.Pointer(import_object)),
+		(*C.wasmer_import_t)(imports),
+		(C.int)(importsLength),
+	))
 }
 
 // End TODO: autogen?
@@ -348,6 +361,24 @@ func cWasmerInstantiateWithMetering(
 		(C.uint)(wasmBytesLength),
 		(*C.wasmer_import_t)(imports),
 		(C.int)(importsLength),
+		(C.uint64_t)(gasLimit),
+		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
+	))
+}
+
+func cWasmerInstantiateWithMeteringAndImportObject(
+	instance **cWasmerInstanceT,
+	wasmBytes *cUchar,
+	wasmBytesLength cUint,
+	importObject *cWasmerImportObjectT,
+	gasLimit uint64,
+	opcode_costs *[OPCODE_COUNT]uint32,
+) cWasmerResultT {
+	return (cWasmerResultT)(C.wasmer_instantiate_with_metering_and_import_object(
+		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
+		(*C.uchar)(wasmBytes),
+		(C.uint)(wasmBytesLength),
+		(*C.wasmer_import_object_t)(importObject),
 		(C.uint64_t)(gasLimit),
 		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
 	))
