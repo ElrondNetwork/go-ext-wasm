@@ -78,7 +78,6 @@ func cWasmerCompileWithGasMetering(
 		(*C.uchar)(wasmBytes),
 		(C.uint)(wasmBytesLength),
 		(C.uint64_t)(gasLimit),
-		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
 	))
 }
 
@@ -95,16 +94,20 @@ func cWasmerInstanceSetPointsUsed(instance *cWasmerInstanceT, points uint64) {
 	)
 }
 
-func cWasmerNewImportObjectFromImports(
-	import_object **cWasmerImportObjectT,
+func cWasmerCacheImportObjectFromImports(
 	imports *cWasmerImportT,
 	importsLength cInt,
 ) cWasmerResultT {
-	return (cWasmerResultT)(C.wasmer_import_object_new_from_imports(
-		(**C.wasmer_import_object_t)(unsafe.Pointer(import_object)),
+	return (cWasmerResultT)(C.wasmer_import_object_cache_from_imports(
 		(*C.wasmer_import_t)(imports),
 		(C.int)(importsLength),
 	))
+}
+
+func cWasmerSetOpcodeCosts(opcode_costs *[OPCODE_COUNT]uint32) {
+	C.wasmer_set_opcode_costs(
+		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
+	)
 }
 
 // End TODO: autogen?
@@ -350,37 +353,13 @@ func cWasmerInstantiateWithMetering(
 	instance **cWasmerInstanceT,
 	wasmBytes *cUchar,
 	wasmBytesLength cUint,
-	imports *cWasmerImportT,
-	importsLength cInt,
 	gasLimit uint64,
-	opcode_costs *[OPCODE_COUNT]uint32,
 ) cWasmerResultT {
 	return (cWasmerResultT)(C.wasmer_instantiate_with_metering(
 		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
 		(*C.uchar)(wasmBytes),
 		(C.uint)(wasmBytesLength),
-		(*C.wasmer_import_t)(imports),
-		(C.int)(importsLength),
 		(C.uint64_t)(gasLimit),
-		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
-	))
-}
-
-func cWasmerInstantiateWithMeteringAndImportObject(
-	instance **cWasmerInstanceT,
-	wasmBytes *cUchar,
-	wasmBytesLength cUint,
-	importObject *cWasmerImportObjectT,
-	gasLimit uint64,
-	opcode_costs *[OPCODE_COUNT]uint32,
-) cWasmerResultT {
-	return (cWasmerResultT)(C.wasmer_instantiate_with_metering_and_import_object(
-		(**C.wasmer_instance_t)(unsafe.Pointer(instance)),
-		(*C.uchar)(wasmBytes),
-		(C.uint)(wasmBytesLength),
-		(*C.wasmer_import_object_t)(importObject),
-		(C.uint64_t)(gasLimit),
-		(*C.uint32_t)(unsafe.Pointer(opcode_costs)),
 	))
 }
 
