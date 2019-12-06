@@ -249,3 +249,7 @@ func (instance *Instance) SetPointsUsed(points uint64) {
 func (instance *Instance) SetBreakpointValue(value uint64) {
 	cWasmerInstanceSetBreakpointValue(instance.instance, value)
 }
+
+func (instance *Instance) GetBreakpointValue() uint64 {
+	return cWasmerInstanceGetBreakpointValue(instance.instance)
+}

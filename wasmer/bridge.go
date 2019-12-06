@@ -101,6 +101,12 @@ func cWasmerInstanceSetBreakpointValue(instance *cWasmerInstanceT, value uint64)
 	)
 }
 
+func cWasmerInstanceGetBreakpointValue(instance *cWasmerInstanceT) uint64 {
+	return uint64(C.wasmer_instance_get_runtime_breakpoint_value(
+		(*C.wasmer_instance_t)(instance),
+	))
+}
+
 func cWasmerCacheImportObjectFromImports(
 	imports *cWasmerImportT,
 	importsLength cInt,
